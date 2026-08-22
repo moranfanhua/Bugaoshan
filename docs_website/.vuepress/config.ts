@@ -7,8 +7,14 @@ import { genNavigationComponents } from './navigation/genNavigationComponents'
 // 自动扫描内容目录生成导航栏与侧边栏
 const { navbar, collections } = genNavigationComponents()
 
+// GitHub Pages 项目页部署在 /Bugaoshan/ 子路径，必须与仓库名一致，
+// 否则资源（css/js）会指向域名根导致主题样式丢失。
+// 若将来部署到自定义域名（如 docs.bugaoshan.scubro.dev）挂在根路径，改回 '/'
+// （届时 logo/favicon 也会自动跟随 base）。
+const base = '/Bugaoshan/'
+
 export default defineUserConfig({
-  base: '/',
+  base,
   lang: 'zh-CN',
   title: '不高山上 · Bugaoshan',
   description: '川大学生专属校园助手',
@@ -24,7 +30,7 @@ export default defineUserConfig({
   },
 
   head: [
-    ['link', { rel: 'icon', href: '/favicon.png' }],
+    ['link', { rel: 'icon', href: `${base}favicon.png` }],
   ],
 
   bundler: viteBundler({
@@ -50,7 +56,7 @@ export default defineUserConfig({
 
     cache: 'filesystem',
 
-    logo: '/images/logo.png',
+    logo: `${base}images/logo.png`,
     appearance: true,
 
     aside: true,
