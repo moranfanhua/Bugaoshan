@@ -1,0 +1,73 @@
+# 文档站构建与部署（GitHub Pages）
+#
+# 注意：GitHub Actions 只会读取「仓库根目录」的 .github/workflows/，
+# 请把本文件复制到仓库根目录 .github/workflows/ 下启用。
+# 路径 `docs_website/**` 与 working-directory `./docs_website` 已按本骨架的目录结构配置好。
+#
+# 部署流程：
+#   1. push 到 main 且改动涉及 docs_website/** 时触发构建
+#   2. 用 pnpm 安装依赖并执行 vuepress build
+#   3. 通过 peaceiris/actions-gh-pages 把产物推送到 gh-pages 分支
+#   4. 仓库 Settings → Pages 选择「gh-pages 分支」即可对外发布
+name: Documentation Site
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - ".github/workflows/docs_website-workflow.yml"
+      - "docs_website/**"
+  pull_request:
+    paths:
+      - ".github/workflows/docs_website-workflow.yml"
+      - "docs_website/**"
+  workflow_dispatch:
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+permissions:
+  # required for peaceiris/actions-gh-pages
+  contents: write
+
+jobs:
+  build:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: "./docs_website/pnpm-lock.yaml"
+
+      - name: Install node modules
+        run: pnpm install --frozen-lockfile
+        working-directory: "./docs_website"
+
+      - name: Build
+        run: pnpm run build
+        working-directory: "./docs_website"
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        # 主仓库 push 自动部署；fork 里可手动触发（workflow_dispatch）部署用于测试
+        if: github.repository == 'The-Brotherhood-of-SCU/Bugaoshan' || github.event_name == 'workflow_dispatch'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: "./docs_website/.vuepress/dist"
+          publish_branch: gh-pages
